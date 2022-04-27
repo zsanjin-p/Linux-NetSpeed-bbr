@@ -4,7 +4,7 @@ export PATH
 #=================================================
 #	System Required: CentOS 7/8,Debian/ubuntu,oraclelinux
 #	Description: BBR+BBRplus+Lotserver
-#	Version: 100.0.1.1
+#	Version: 100.0.1.2
 #	Author: 千影,cx9208,YLX
 #	更新内容及反馈:  https://blog.ylx.me/archives/783.html
 #=================================================
@@ -15,7 +15,7 @@ export PATH
 # SKYBLUE='\033[0;36m'
 # PLAIN='\033[0m'
 
-sh_ver="100.0.1.1"
+sh_ver="100.0.1.2"
 github="raw.githubusercontent.com/ylx2016/Linux-NetSpeed/master"
 
 imgurl=""
@@ -927,7 +927,7 @@ net.ipv4.tcp_tw_reuse = 0
 net.ipv4.tcp_fin_timeout = 15
 net.ipv4.ip_local_port_range = 1024 65535
 net.ipv4.tcp_max_tw_buckets = 5000
-net.ipv4.tcp_fastopen = 3
+net.ipv4.tcp_fastopen = 4
 net.ipv4.tcp_rmem = 4096 87380 67108864
 net.ipv4.tcp_wmem = 4096 65536 67108864
 net.ipv4.udp_rmem_min = 8192
@@ -965,46 +965,60 @@ EOF
   sysctl --system
   echo madvise >/sys/kernel/mm/transparent_hugepage/enabled
 
-  sed -i '/DefaultTimeoutStartSec/d' /etc/systemd/system.conf
-  sed -i '/DefaultTimeoutStopSec/d' /etc/systemd/system.conf
-  sed -i '/DefaultRestartSec/d' /etc/systemd/system.conf
-  sed -i '/DefaultLimitCORE/d' /etc/systemd/system.conf
-  sed -i '/DefaultLimitNOFILE/d' /etc/systemd/system.conf
-  sed -i '/DefaultLimitNPROC/d' /etc/systemd/system.conf
-
   cat >'/etc/systemd/system.conf' <<EOF
 [Manager]
 #DefaultTimeoutStartSec=90s
 DefaultTimeoutStopSec=30s
 #DefaultRestartSec=100ms
 DefaultLimitCORE=infinity
-DefaultLimitNOFILE=65535
-DefaultLimitNPROC=65535
+DefaultLimitNOFILE=infinity
+DefaultLimitNPROC=infinity
+DefaultTasksMax=infinity
 EOF
 
-  sed -i '/soft nofile/d' /etc/security/limits.conf
-  sed -i '/hard nofile/d' /etc/security/limits.conf
-  sed -i '/soft nproc/d' /etc/security/limits.conf
-  sed -i '/hard nproc/d' /etc/security/limits.conf
-  cat >'/etc/security/limits.conf' <<EOF
-* soft nofile 65535
-* hard nofile 65535
+  cat > '/etc/security/limits.conf' << EOF
+root     soft   nofile    1000000
+root     hard   nofile    1000000
+root     soft   nproc     unlimited
+root     hard   nproc     unlimited
+root     soft   core      unlimited
+root     hard   core      unlimited
+root     hard   memlock   unlimited
+root     soft   memlock   unlimited
+*     soft   nofile    1000000
+*     hard   nofile    1000000
+*     soft   nproc     unlimited
+*     hard   nproc     unlimited
+*     soft   core      unlimited
+*     hard   core      unlimited
+*     hard   memlock   unlimited
+*     soft   memlock   unlimited
 EOF
   if grep -q "ulimit" /etc/profile; then
     :
   else
     sed -i '/ulimit -SHn/d' /etc/profile
     sed -i '/ulimit -SHu/d' /etc/profile
-    echo "ulimit -SHn 65535" >>/etc/profile
+    echo "ulimit -SHn 1000000" >> /etc/profile
   fi
   if grep -q "pam_limits.so" /etc/pam.d/common-session; then
     :
   else
     sed -i '/required pam_limits.so/d' /etc/pam.d/common-session
-    echo "session required pam_limits.so" >>/etc/pam.d/common-session
+    echo "session required pam_limits.so" >> /etc/pam.d/common-session
   fi
   systemctl daemon-reload
   echo -e "${Info}johnrosen1优化方案应用结束，可能需要重启！"
+}
+
+optimizing_ddcc() {
+sed -i '/net.ipv4.conf.all.rp_filter/d' /etc/sysctl.d/99-sysctl.conf
+sed -i '/net.ipv4.tcp_syncookies/d' /etc/sysctl.d/99-sysctl.conf
+sed -i '/net.ipv4.tcp_max_syn_backlog/d' /etc/sysctl.d/99-sysctl.conf
+
+echo "net.ipv4.conf.all.rp_filter = 1" >> /etc/sysctl.d/99-sysctl.conf
+echo "net.ipv4.tcp_syncookies = 1" >> /etc/sysctl.d/99-sysctl.conf
+echo "net.ipv4.tcp_max_syn_backlog = 1024" >> /etc/sysctl.d/99-sysctl.conf
 }
 
 #更新脚本
@@ -1199,6 +1213,9 @@ start_menu() {
   25)
     remove_all
     ;;
+  26)
+    optimizing_ddcc
+    ;;	
   51)
     BBR_grub
     ;;
