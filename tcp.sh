@@ -716,7 +716,7 @@ remove_bbr_lotserver() {
   rm -rf bbrmod
 
   if [[ -e /appex/bin/lotServer.sh ]]; then
-    echo | bash <(wget -qO- https://git.io/lotServerInstall.sh) uninstall
+    echo | bash <(wget -qO- https://raw.githubusercontent.com/fei5seven/lotServer/master/lotServerInstall.sh) uninstall
   fi
   clear
   # echo -e "${Info}:清除bbr/lotserver加速完成。"
@@ -793,7 +793,7 @@ remove_all() {
   sed -i '/net.ipv4.tcp_timestamps/d' /etc/sysctl.conf
   sed -i '/net.ipv4.tcp_max_orphans/d' /etc/sysctl.conf
   if [[ -e /appex/bin/lotServer.sh ]]; then
-    bash <(wget -qO- https://git.io/lotServerInstall.sh) uninstall
+    bash <(wget -qO- https://raw.githubusercontent.com/fei5seven/lotServer/master/lotServerInstall.sh) uninstall
   fi
   clear
   echo -e "${Info}:清除加速完成。"
@@ -1085,7 +1085,7 @@ sysctl --system
 #更新脚本
 Update_Shell() {
   echo -e "当前版本为 [ ${sh_ver} ]，开始检测最新版本..."
-  sh_new_ver=$(wget -qO- "https://git.io/coolspeeda" | grep 'sh_ver="' | awk -F "=" '{print $NF}' | sed 's/\"//g' | head -1)
+  sh_new_ver=$(wget -qO- "https://github.com/ylx2016/Linux-NetSpeed/raw/master/tcp.sh" | grep 'sh_ver="' | awk -F "=" '{print $NF}' | sed 's/\"//g' | head -1)
   [[ -z ${sh_new_ver} ]] && echo -e "${Error} 检测最新版本失败 !" && start_menu
   if [ ${sh_new_ver} != ${sh_ver} ]; then
     echo -e "发现新版本[ ${sh_new_ver} ]，是否更新？[Y/n]"
@@ -1106,7 +1106,7 @@ Update_Shell() {
 #切换到不卸载内核版本
 gototcpx() {
   clear
-  wget -O tcpx.sh "https://git.io/JYxKU" && chmod +x tcpx.sh && ./tcpx.sh
+  wget -O tcpx.sh "https://github.com/ylx2016/Linux-NetSpeed/raw/master/tcpx.sh" && chmod +x tcpx.sh && ./tcpx.sh
 }
 
 #切换到秋水逸冰BBR安装脚本
@@ -1120,7 +1120,7 @@ gotodd() {
   clear
   echo DD使用git.beta.gs的脚本，知悉
   sleep 1.5
-  wget -O NewReinstall.sh https://git.io/newbetags && chmod a+x NewReinstall.sh && bash NewReinstall.sh
+  wget -O NewReinstall.sh https://github.com/fcurrk/reinstall/raw/master/NewReinstall.sh && chmod a+x NewReinstall.sh && bash NewReinstall.sh
   #wget -qO ~/Network-Reinstall-System-Modify.sh 'https://github.com/ylx2016/reinstall/raw/master/Network-Reinstall-System-Modify.sh' && chmod a+x ~/Network-Reinstall-System-Modify.sh && bash ~/Network-Reinstall-System-Modify.sh -UI_Options
 }
 
