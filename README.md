@@ -79,6 +79,7 @@ https://bintray.com/multipath-tcp/mptcp_rpm/mptcp/v0.95.1#files
 https://bintray.com/multipath-tcp/mptcp_deb/mptcp/v0.95.1#files
 
 DD脚本
+https://git.beta.gs/
 https://www.cxthhhhh.com/network-reinstall-system-modify
 
 高科技
