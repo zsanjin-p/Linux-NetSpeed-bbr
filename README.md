@@ -1,7 +1,11 @@
-# Linux-NetSpeed
-```
-搬瓦工在线库存查询
-https://bwg.ylx.me/
+赞助
+<br>
+支付宝
+<br>
+![20200312144201.png](https://vip1.loli.io/2020/03/12/7IJvKaTcrLBDbtz.png)
+
+![搬瓦工在线库存查询](https://bwg.ylx.me/)
+
 
 预先准备
 centos：yum install ca-certificates wget -y && update-ca-trust force-enable
@@ -93,4 +97,3 @@ https://zh.wikipedia.org/zh/Ubuntu
 https://wiki.ubuntu.com/Releases
 https://wiki.debian.org/LTS
 https://wiki.centos.org/zh/About/Product
-
