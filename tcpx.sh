@@ -831,7 +831,6 @@ optimizing_system_johnrosen1() {
   sed -i '/net.ipv6.conf.lo.disable_ipv6/d' /etc/sysctl.d/99-sysctl.conf
   sed -i '/net.ipv6.conf.all.accept_ra/d' /etc/sysctl.d/99-sysctl.conf
   sed -i '/net.ipv6.conf.default.accept_ra/d' /etc/sysctl.d/99-sysctl.conf
-  sed -i '/net.ipv6.conf.default.accept_ra/d' /etc/sysctl.d/99-sysctl.conf
   sed -i '/net.core.netdev_max_backlog/d' /etc/sysctl.d/99-sysctl.conf
   sed -i '/net.core.netdev_budget/d' /etc/sysctl.d/99-sysctl.conf
   sed -i '/net.core.netdev_budget_usecs/d' /etc/sysctl.d/99-sysctl.conf
@@ -913,13 +912,13 @@ net.ipv4.ip_forward = 1
 net.ipv4.conf.all.forwarding = 1
 net.ipv4.conf.default.forwarding = 1
 net.ipv6.conf.all.forwarding = 1
-#net.ipv6.conf.default.forwarding = 1
+net.ipv6.conf.default.forwarding = 1
 net.ipv6.conf.lo.forwarding = 1
-#net.ipv6.conf.all.disable_ipv6 = 0
-#net.ipv6.conf.default.disable_ipv6 = 0
-#net.ipv6.conf.lo.disable_ipv6 = 0
-#net.ipv6.conf.all.accept_ra = 2
-#net.ipv6.conf.default.accept_ra = 2
+net.ipv6.conf.all.disable_ipv6 = 0
+net.ipv6.conf.default.disable_ipv6 = 0
+net.ipv6.conf.lo.disable_ipv6 = 0
+net.ipv6.conf.all.accept_ra = 2
+net.ipv6.conf.default.accept_ra = 2
 net.core.netdev_max_backlog = 100000
 net.core.netdev_budget = 50000
 net.core.netdev_budget_usecs = 5000
@@ -1114,10 +1113,14 @@ openipv6() {
   sed -i '/net.ipv6.conf.all.disable_ipv6/d' /etc/sysctl.conf
   sed -i '/net.ipv6.conf.default.disable_ipv6/d' /etc/sysctl.conf
   sed -i '/net.ipv6.conf.lo.disable_ipv6/d' /etc/sysctl.conf
+  sed -i '/net.ipv6.conf.all.accept_ra/d' /etc/sysctl.conf
+  sed -i '/net.ipv6.conf.default.accept_ra/d' /etc/sysctl.conf
 
   echo "net.ipv6.conf.all.disable_ipv6 = 0
 net.ipv6.conf.default.disable_ipv6 = 0
-net.ipv6.conf.lo.disable_ipv6 = 0" >>/etc/sysctl.d/99-sysctl.conf
+net.ipv6.conf.lo.disable_ipv6 = 0
+net.ipv6.conf.all.accept_ra = 2
+net.ipv6.conf.default.accept_ra = 2" >>/etc/sysctl.d/99-sysctl.conf
   sysctl --system
   echo -e "${Info}开启IPv6结束，可能需要重启！"
 }
@@ -1519,7 +1522,6 @@ check_sys() {
     # virtual="Hyper-V"
     # else
     # virtual="Microsoft Virtual Machine"
-    # fi
     # fi
     # else
     # virtual="Dedicated母鸡"

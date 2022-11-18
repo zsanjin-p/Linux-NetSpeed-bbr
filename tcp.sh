@@ -4,7 +4,7 @@ export PATH
 #=================================================
 #	System Required: CentOS 7/8,Debian/ubuntu,oraclelinux
 #	Description: BBR+BBRplus+Lotserver
-#	Version: 100.0.1.9
+#	Version: 100.0.1.10
 #	Author: 千影,cx9208,YLX
 #	更新内容及反馈:  https://blog.ylx.me/archives/783.html
 #=================================================
@@ -15,7 +15,7 @@ export PATH
 # SKYBLUE='\033[0;36m'
 # PLAIN='\033[0m'
 
-sh_ver="100.0.1.9"
+sh_ver="100.0.1.10"
 github="raw.githubusercontent.com/ylx2016/Linux-NetSpeed/master"
 
 imgurl=""
@@ -861,6 +861,11 @@ optimizing_system_johnrosen1() {
   if [ ! -f "/etc/sysctl.d/99-sysctl.conf" ]; then
     touch /etc/sysctl.d/99-sysctl.conf
   fi
+  sed -i 'net.ipv4.tcp_fack/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i 'net.ipv4.tcp_early_retrans/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i 'net.ipv4.neigh.default.unres_qlen/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i 'net.ipv4.tcp_max_orphans/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i 'net.netfilter.nf_conntrack_buckets/d' /etc/sysctl.d/99-sysctl.conf
   sed -i '/kernel.pid_max/d' /etc/sysctl.d/99-sysctl.conf
   sed -i '/vm.nr_hugepages/d' /etc/sysctl.d/99-sysctl.conf
   sed -i '/net.core.optmem_max/d' /etc/sysctl.d/99-sysctl.conf
@@ -875,7 +880,6 @@ optimizing_system_johnrosen1() {
   sed -i '/net.ipv6.conf.default.disable_ipv6/d' /etc/sysctl.d/99-sysctl.conf
   sed -i '/net.ipv6.conf.lo.disable_ipv6/d' /etc/sysctl.d/99-sysctl.conf
   sed -i '/net.ipv6.conf.all.accept_ra/d' /etc/sysctl.d/99-sysctl.conf
-  sed -i '/net.ipv6.conf.default.accept_ra/d' /etc/sysctl.d/99-sysctl.conf
   sed -i '/net.ipv6.conf.default.accept_ra/d' /etc/sysctl.d/99-sysctl.conf
   sed -i '/net.core.netdev_max_backlog/d' /etc/sysctl.d/99-sysctl.conf
   sed -i '/net.core.netdev_budget/d' /etc/sysctl.d/99-sysctl.conf
@@ -941,8 +945,18 @@ optimizing_system_johnrosen1() {
   sed -i '/net.ipv6.neigh.default.gc_thresh1/d' /etc/sysctl.d/99-sysctl.conf
   sed -i '/net.netfilter.nf_conntrack_max/d' /etc/sysctl.d/99-sysctl.conf
   sed -i '/net.nf_conntrack_max/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i 'net.netfilter.nf_conntrack_tcp_timeout_fin_wait/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i 'net.netfilter.nf_conntrack_tcp_timeout_time_wait/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i 'net.netfilter.nf_conntrack_tcp_timeout_close_wait/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i 'net.netfilter.nf_conntrack_tcp_timeout_established/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i 'fs.inotify.max_user_instances/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i 'fs.inotify.max_user_watches/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i 'net.ipv4.tcp_low_latency/d' /etc/sysctl.d/99-sysctl.conf
 
   cat >'/etc/sysctl.d/99-sysctl.conf' <<EOF
+net.ipv4.tcp_fack = 1
+net.ipv4.tcp_early_retrans = 3
+net.ipv4.neigh.default.unres_qlen=10000  
 net.ipv4.conf.all.route_localnet=1
 net.ipv4.ip_forward = 1
 net.ipv4.conf.all.forwarding = 1
@@ -1023,7 +1037,7 @@ net.ipv4.tcp_low_latency = 1
 EOF
   sysctl -p
   sysctl --system
-  echo madvise >/sys/kernel/mm/transparent_hugepage/enabled
+  echo always >/sys/kernel/mm/transparent_hugepage/enabled
 
   cat >'/etc/systemd/system.conf' <<EOF
 [Manager]
@@ -1036,7 +1050,7 @@ DefaultLimitNPROC=infinity
 DefaultTasksMax=infinity
 EOF
 
-  cat > '/etc/security/limits.conf' << EOF
+  cat >'/etc/security/limits.conf' <<EOF
 root     soft   nofile    1000000
 root     hard   nofile    1000000
 root     soft   nproc     unlimited
@@ -1054,13 +1068,11 @@ root     soft   memlock   unlimited
 *     hard   memlock   unlimited
 *     soft   memlock   unlimited
 EOF
-  if grep -q "ulimit" /etc/profile; then
-    :
-  else
-    sed -i '/ulimit -SHn/d' /etc/profile
-    sed -i '/ulimit -SHu/d' /etc/profile
-    echo "ulimit -SHn 1000000" >> /etc/profile
-  fi
+
+  sed -i '/ulimit -SHn/d' /etc/profile
+  sed -i '/ulimit -SHu/d' /etc/profile
+  echo "ulimit -SHn 1000000" >>/etc/profile
+
   if grep -q "pam_limits.so" /etc/pam.d/common-session; then
     :
   else
@@ -1072,15 +1084,15 @@ EOF
 }
 
 optimizing_ddcc() {
-sed -i '/net.ipv4.conf.all.rp_filter/d' /etc/sysctl.d/99-sysctl.conf
-sed -i '/net.ipv4.tcp_syncookies/d' /etc/sysctl.d/99-sysctl.conf
-sed -i '/net.ipv4.tcp_max_syn_backlog/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i '/net.ipv4.conf.all.rp_filter/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i '/net.ipv4.tcp_syncookies/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i '/net.ipv4.tcp_max_syn_backlog/d' /etc/sysctl.d/99-sysctl.conf
 
-echo "net.ipv4.conf.all.rp_filter = 1" >> /etc/sysctl.d/99-sysctl.conf
-echo "net.ipv4.tcp_syncookies = 1" >> /etc/sysctl.d/99-sysctl.conf
-echo "net.ipv4.tcp_max_syn_backlog = 1024" >> /etc/sysctl.d/99-sysctl.conf
-sysctl -p
-sysctl --system
+  echo "net.ipv4.conf.all.rp_filter = 1" >>/etc/sysctl.d/99-sysctl.conf
+  echo "net.ipv4.tcp_syncookies = 1" >>/etc/sysctl.d/99-sysctl.conf
+  echo "net.ipv4.tcp_max_syn_backlog = 1024" >>/etc/sysctl.d/99-sysctl.conf
+  sysctl -p
+  sysctl --system
 }
 
 #更新脚本
@@ -1151,10 +1163,14 @@ openipv6() {
   sed -i '/net.ipv6.conf.all.disable_ipv6/d' /etc/sysctl.conf
   sed -i '/net.ipv6.conf.default.disable_ipv6/d' /etc/sysctl.conf
   sed -i '/net.ipv6.conf.lo.disable_ipv6/d' /etc/sysctl.conf
+  sed -i '/net.ipv6.conf.all.accept_ra/d' /etc/sysctl.conf
+  sed -i '/net.ipv6.conf.default.accept_ra/d' /etc/sysctl.conf
 
   echo "net.ipv6.conf.all.disable_ipv6 = 0
 net.ipv6.conf.default.disable_ipv6 = 0
-net.ipv6.conf.lo.disable_ipv6 = 0" >>/etc/sysctl.d/99-sysctl.conf
+net.ipv6.conf.lo.disable_ipv6 = 0
+net.ipv6.conf.all.accept_ra = 2
+net.ipv6.conf.default.accept_ra = 2" >>/etc/sysctl.d/99-sysctl.conf
   sysctl --system
   echo -e "${Info}开启IPv6结束，可能需要重启！"
 }
@@ -1176,7 +1192,7 @@ start_menu() {
  ${Green_font_prefix}19.${Font_color_suffix} 使用BBRplus+FQ版加速 
  ${Green_font_prefix}20.${Font_color_suffix} 使用Lotserver(锐速)加速 
  ${Green_font_prefix}21.${Font_color_suffix} 系统配置优化	 	${Green_font_prefix}22.${Font_color_suffix} 应用johnrosen1的优化方案
- ${Green_font_prefix}23.${Font_color_suffix} 禁用IPv6	 		${Green_font_prefix}24.${Font_color_suffix} 开启IPv6  
+ ${Green_font_prefix}23.${Font_color_suffix} 禁用IPv6	 		${Green_font_prefix}24.${Font_color_suffix} 开启IPv6
  ${Green_font_prefix}25.${Font_color_suffix} 卸载全部加速	 	${Green_font_prefix}99.${Font_color_suffix} 退出脚本 
 ————————————————————————————————————————————————————————————————" &&
     check_status
@@ -1263,7 +1279,7 @@ start_menu() {
     ;;
   26)
     optimizing_ddcc
-    ;;	
+    ;;
   99)
     exit 1
     ;;
@@ -1301,7 +1317,7 @@ detele_kernel() {
         deb_del=$(dpkg -l | grep linux-image | awk '{print $2}' | grep -v "${kernel_version}" | head -${integer})
         echo -e "开始卸载 ${deb_del} 内核..."
         apt-get purge -y ${deb_del}
-		apt-get autoremove -y
+        apt-get autoremove -y
         echo -e "卸载 ${deb_del} 内核卸载完成，继续..."
       done
       echo -e "内核卸载完毕，继续..."
@@ -1334,7 +1350,7 @@ detele_kernel_head() {
         deb_del=$(dpkg -l | grep linux-headers | awk '{print $2}' | grep -v "${kernel_version}" | head -${integer})
         echo -e "开始卸载 ${deb_del} headers内核..."
         apt-get purge -y ${deb_del}
-		apt-get autoremove -y
+        apt-get autoremove -y
         echo -e "卸载 ${deb_del} 内核卸载完成，继续..."
       done
       echo -e "内核卸载完毕，继续..."
@@ -1343,6 +1359,7 @@ detele_kernel_head() {
     fi
   fi
 }
+
 
 #更新引导
 BBR_grub() {
@@ -1525,7 +1542,6 @@ check_sys() {
     # virtual="Hyper-V"
     # else
     # virtual="Microsoft Virtual Machine"
-    # fi
     # fi
     # else
     # virtual="Dedicated母鸡"
@@ -1809,6 +1825,7 @@ check_sys_Lotsever() {
     echo -e "${Error} Lotsever不支持当前系统 ${release} ${version} ${bit} !" && exit 1
   fi
 }
+
 
 #检查系统当前状态
 check_status() {
