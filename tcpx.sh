@@ -814,8 +814,8 @@ optimizing_system_johnrosen1() {
   sed -i 'net.ipv4.tcp_fack/d' /etc/sysctl.d/99-sysctl.conf
   sed -i 'net.ipv4.tcp_early_retrans/d' /etc/sysctl.d/99-sysctl.conf
   sed -i 'net.ipv4.neigh.default.unres_qlen/d' /etc/sysctl.d/99-sysctl.conf
-  sed -i 'net.ipv4.tcp_max_orphans' /etc/sysctl.d/99-sysctl.conf
-  sed -i 'net.netfilter.nf_conntrack_buckets' /etc/sysctl.d/99-sysctl.conf
+  sed -i 'net.ipv4.tcp_max_orphans/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i 'net.netfilter.nf_conntrack_buckets/d' /etc/sysctl.d/99-sysctl.conf
   sed -i '/kernel.pid_max/d' /etc/sysctl.d/99-sysctl.conf
   sed -i '/vm.nr_hugepages/d' /etc/sysctl.d/99-sysctl.conf
   sed -i '/net.core.optmem_max/d' /etc/sysctl.d/99-sysctl.conf
@@ -896,13 +896,13 @@ optimizing_system_johnrosen1() {
   sed -i '/net.ipv6.neigh.default.gc_thresh1/d' /etc/sysctl.d/99-sysctl.conf
   sed -i '/net.netfilter.nf_conntrack_max/d' /etc/sysctl.d/99-sysctl.conf
   sed -i '/net.nf_conntrack_max/d' /etc/sysctl.d/99-sysctl.conf
-  sed -i 'net.netfilter.nf_conntrack_tcp_timeout_fin_wait' /etc/sysctl.d/99-sysctl.conf
-  sed -i 'net.netfilter.nf_conntrack_tcp_timeout_time_wait' /etc/sysctl.d/99-sysctl.conf
-  sed -i 'net.netfilter.nf_conntrack_tcp_timeout_close_wait' /etc/sysctl.d/99-sysctl.conf
-  sed -i 'net.netfilter.nf_conntrack_tcp_timeout_established' /etc/sysctl.d/99-sysctl.conf
-  sed -i 'fs.inotify.max_user_instances' /etc/sysctl.d/99-sysctl.conf
-  sed -i 'fs.inotify.max_user_watches' /etc/sysctl.d/99-sysctl.conf
-  sed -i 'net.ipv4.tcp_low_latency' /etc/sysctl.d/99-sysctl.conf
+  sed -i 'net.netfilter.nf_conntrack_tcp_timeout_fin_wait/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i 'net.netfilter.nf_conntrack_tcp_timeout_time_wait/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i 'net.netfilter.nf_conntrack_tcp_timeout_close_wait/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i 'net.netfilter.nf_conntrack_tcp_timeout_established/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i 'fs.inotify.max_user_instances/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i 'fs.inotify.max_user_watches/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i 'net.ipv4.tcp_low_latency/d' /etc/sysctl.d/99-sysctl.conf
 
   cat >'/etc/sysctl.d/99-sysctl.conf' <<EOF
 net.ipv4.tcp_fack = 1
