@@ -4,7 +4,7 @@ export PATH
 #=================================================
 #	System Required: CentOS 7/8,Debian/ubuntu,oraclelinux
 #	Description: BBR+BBRplus+Lotserver
-#	Version: 100.0.1.9
+#	Version: 100.0.1.10
 #	Author: 千影,cx9208,YLX
 #	更新内容及反馈:  https://blog.ylx.me/archives/783.html
 #=================================================
@@ -15,7 +15,7 @@ export PATH
 # SKYBLUE='\033[0;36m'
 # PLAIN='\033[0m'
 
-sh_ver="100.0.1.9"
+sh_ver="100.0.1.10"
 github="raw.githubusercontent.com/ylx2016/Linux-NetSpeed/master"
 
 imgurl=""
@@ -50,7 +50,7 @@ check_cn() {
   if [[ "$geoip" != "" ]]; then
     # echo "下面使用fastgit.org的加速服务"
     # echo ${1//github.com/download.fastgit.org}
-	echo https://endpoint.fastgit.org/$1
+    echo https://endpoint.fastgit.org/$1
   else
     echo $1
   fi
@@ -127,10 +127,10 @@ installbbr() {
       imgurl=$(curl -s 'https://api.github.com/repos/ylx2016/kernel/releases' | grep ${github_tag} | grep 'deb' | grep -v 'headers' | grep -v 'devel' | awk -F '"' '{print $4}')
       #headurl=https://github.com/ylx2016/kernel/releases/download/$github_tag/linux-headers-${github_ver}_${github_ver}-1_amd64.deb
       #imgurl=https://github.com/ylx2016/kernel/releases/download/$github_tag/linux-image-${github_ver}_${github_ver}-1_amd64.deb
-      
+
       headurl=$(check_cn $headurl)
       imgurl=$(check_cn $imgurl)
-	  echo -e "正在检查headers下载连接...."
+      echo -e "正在检查headers下载连接...."
       checkurl $headurl
       echo -e "正在检查内核下载连接...."
       checkurl $imgurl
@@ -811,6 +811,11 @@ optimizing_system_johnrosen1() {
   if [ ! -f "/etc/sysctl.d/99-sysctl.conf" ]; then
     touch /etc/sysctl.d/99-sysctl.conf
   fi
+  sed -i 'net.ipv4.tcp_fack/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i 'net.ipv4.tcp_early_retrans/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i 'net.ipv4.neigh.default.unres_qlen/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i 'net.ipv4.tcp_max_orphans' /etc/sysctl.d/99-sysctl.conf
+  sed -i 'net.netfilter.nf_conntrack_buckets' /etc/sysctl.d/99-sysctl.conf
   sed -i '/kernel.pid_max/d' /etc/sysctl.d/99-sysctl.conf
   sed -i '/vm.nr_hugepages/d' /etc/sysctl.d/99-sysctl.conf
   sed -i '/net.core.optmem_max/d' /etc/sysctl.d/99-sysctl.conf
@@ -891,8 +896,18 @@ optimizing_system_johnrosen1() {
   sed -i '/net.ipv6.neigh.default.gc_thresh1/d' /etc/sysctl.d/99-sysctl.conf
   sed -i '/net.netfilter.nf_conntrack_max/d' /etc/sysctl.d/99-sysctl.conf
   sed -i '/net.nf_conntrack_max/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i 'net.netfilter.nf_conntrack_tcp_timeout_fin_wait' /etc/sysctl.d/99-sysctl.conf
+  sed -i 'net.netfilter.nf_conntrack_tcp_timeout_time_wait' /etc/sysctl.d/99-sysctl.conf
+  sed -i 'net.netfilter.nf_conntrack_tcp_timeout_close_wait' /etc/sysctl.d/99-sysctl.conf
+  sed -i 'net.netfilter.nf_conntrack_tcp_timeout_established' /etc/sysctl.d/99-sysctl.conf
+  sed -i 'fs.inotify.max_user_instances' /etc/sysctl.d/99-sysctl.conf
+  sed -i 'fs.inotify.max_user_watches' /etc/sysctl.d/99-sysctl.conf
+  sed -i 'net.ipv4.tcp_low_latency' /etc/sysctl.d/99-sysctl.conf
 
   cat >'/etc/sysctl.d/99-sysctl.conf' <<EOF
+net.ipv4.tcp_fack = 1
+net.ipv4.tcp_early_retrans = 3
+net.ipv4.neigh.default.unres_qlen=10000  
 net.ipv4.conf.all.route_localnet=1
 net.ipv4.ip_forward = 1
 net.ipv4.conf.all.forwarding = 1
@@ -973,7 +988,7 @@ net.ipv4.tcp_low_latency = 1
 EOF
   sysctl -p
   sysctl --system
-  echo madvise >/sys/kernel/mm/transparent_hugepage/enabled
+  echo always >/sys/kernel/mm/transparent_hugepage/enabled
 
   cat >'/etc/systemd/system.conf' <<EOF
 [Manager]
@@ -986,7 +1001,7 @@ DefaultLimitNPROC=infinity
 DefaultTasksMax=infinity
 EOF
 
-  cat > '/etc/security/limits.conf' << EOF
+  cat >'/etc/security/limits.conf' <<EOF
 root     soft   nofile    1000000
 root     hard   nofile    1000000
 root     soft   nproc     unlimited
@@ -1004,33 +1019,31 @@ root     soft   memlock   unlimited
 *     hard   memlock   unlimited
 *     soft   memlock   unlimited
 EOF
-  if grep -q "ulimit" /etc/profile; then
-    :
-  else
-    sed -i '/ulimit -SHn/d' /etc/profile
-    sed -i '/ulimit -SHu/d' /etc/profile
-    echo "ulimit -SHn 1000000" >> /etc/profile
-  fi
+
+  sed -i '/ulimit -SHn/d' /etc/profile
+  sed -i '/ulimit -SHu/d' /etc/profile
+  echo "ulimit -SHn 1000000" >>/etc/profile
+
   if grep -q "pam_limits.so" /etc/pam.d/common-session; then
     :
   else
     sed -i '/required pam_limits.so/d' /etc/pam.d/common-session
-    echo "session required pam_limits.so" >> /etc/pam.d/common-session
+    echo "session required pam_limits.so" >>/etc/pam.d/common-session
   fi
   systemctl daemon-reload
   echo -e "${Info}johnrosen1优化方案应用结束，可能需要重启！"
 }
 
 optimizing_ddcc() {
-sed -i '/net.ipv4.conf.all.rp_filter/d' /etc/sysctl.d/99-sysctl.conf
-sed -i '/net.ipv4.tcp_syncookies/d' /etc/sysctl.d/99-sysctl.conf
-sed -i '/net.ipv4.tcp_max_syn_backlog/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i '/net.ipv4.conf.all.rp_filter/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i '/net.ipv4.tcp_syncookies/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i '/net.ipv4.tcp_max_syn_backlog/d' /etc/sysctl.d/99-sysctl.conf
 
-echo "net.ipv4.conf.all.rp_filter = 1" >> /etc/sysctl.d/99-sysctl.conf
-echo "net.ipv4.tcp_syncookies = 1" >> /etc/sysctl.d/99-sysctl.conf
-echo "net.ipv4.tcp_max_syn_backlog = 1024" >> /etc/sysctl.d/99-sysctl.conf
-sysctl -p
-sysctl --system
+  echo "net.ipv4.conf.all.rp_filter = 1" >>/etc/sysctl.d/99-sysctl.conf
+  echo "net.ipv4.tcp_syncookies = 1" >>/etc/sysctl.d/99-sysctl.conf
+  echo "net.ipv4.tcp_max_syn_backlog = 1024" >>/etc/sysctl.d/99-sysctl.conf
+  sysctl -p
+  sysctl --system
 }
 
 #更新脚本
@@ -1164,7 +1177,7 @@ start_menu() {
     ;;
   7)
     check_sys_official_zen
-    ;;	
+    ;;
   30)
     check_sys_official
     ;;
@@ -1230,7 +1243,7 @@ start_menu() {
     ;;
   26)
     optimizing_ddcc
-    ;;	
+    ;;
   51)
     BBR_grub
     ;;
@@ -1274,7 +1287,7 @@ detele_kernel() {
         deb_del=$(dpkg -l | grep linux-image | awk '{print $2}' | grep -v "${kernel_version}" | head -${integer})
         echo -e "开始卸载 ${deb_del} 内核..."
         apt-get purge -y ${deb_del}
-		apt-get autoremove -y
+        apt-get autoremove -y
         echo -e "卸载 ${deb_del} 内核卸载完成，继续..."
       done
       echo -e "内核卸载完毕，继续..."
@@ -1307,7 +1320,7 @@ detele_kernel_head() {
         deb_del=$(dpkg -l | grep linux-headers | awk '{print $2}' | grep -v "${kernel_version}" | head -${integer})
         echo -e "开始卸载 ${deb_del} headers内核..."
         apt-get purge -y ${deb_del}
-		apt-get autoremove -y
+        apt-get autoremove -y
         echo -e "卸载 ${deb_del} 内核卸载完成，继续..."
       done
       echo -e "内核卸载完毕，继续..."
