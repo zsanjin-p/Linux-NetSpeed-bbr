@@ -547,7 +547,7 @@ installbbrplusnew() {
       #echo -e "获取的版本号为:${github_ver}"
       kernel_version=${github_ver_plus_num}-bbrplus
       detele_kernel_head
-      headurl=$(curl -s 'https://api.github.com/repos/UJX6N/bbrplus-6.x_stable9/releases' | grep ${github_ver_plus} | grep 'https' | grep 'amd64.deb' | grep 'headers' | awk -F '"' '{print $4}')
+      headurl=$(curl -s 'https://api.github.com/repos/UJX6N/bbrplus-6.x_stable/releases' | grep ${github_ver_plus} | grep 'https' | grep 'amd64.deb' | grep 'headers' | awk -F '"' '{print $4}')
       imgurl=$(curl -s 'https://api.github.com/repos/UJX6N/bbrplus-6.x_stable/releases' | grep ${github_ver_plus} | grep 'https' | grep 'amd64.deb' | grep 'image' | awk -F '"' '{print $4}')
 
       headurl=$(check_cn $headurl)
