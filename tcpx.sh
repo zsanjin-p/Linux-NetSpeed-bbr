@@ -4,7 +4,7 @@ export PATH
 #=================================================
 #	System Required: CentOS 7/8,Debian/ubuntu,oraclelinux
 #	Description: BBR+BBRplus+Lotserver
-#	Version: 100.0.1.10
+#	Version: 100.0.1.12
 #	Author: 千影,cx9208,YLX
 #	更新内容及反馈:  https://blog.ylx.me/archives/783.html
 #=================================================
@@ -15,7 +15,7 @@ export PATH
 # SKYBLUE='\033[0;36m'
 # PLAIN='\033[0m'
 
-sh_ver="100.0.1.11"
+sh_ver="100.0.1.12"
 github="raw.githubusercontent.com/ylx2016/Linux-NetSpeed/master"
 
 imgurl=""
@@ -1136,7 +1136,7 @@ start_menu() {
  ${Green_font_prefix}2.${Font_color_suffix} 安装 BBRplus版内核		${Green_font_prefix}5.${Font_color_suffix} 安装 BBRplus新版内核
  ${Green_font_prefix}3.${Font_color_suffix} 安装 Lotserver(锐速)内核	${Green_font_prefix}6.${Font_color_suffix} 安装 xanmod版内核
  ${Green_font_prefix}30.${Font_color_suffix} 安装 官方稳定内核		${Green_font_prefix}31.${Font_color_suffix} 安装 官方最新内核 backports/elrepo
- ${Green_font_prefix}32.${Font_color_suffix} 安装 XANMOD官方内核	${Green_font_prefix}33.${Font_color_suffix} 安装 XANMOD官方高响应内核
+ ${Green_font_prefix}32.${Font_color_suffix} 安装 XANMOD官方内核(main)
  ${Green_font_prefix}11.${Font_color_suffix} 使用BBR+FQ加速		${Green_font_prefix}12.${Font_color_suffix} 使用BBR+FQ_PIE加速 
  ${Green_font_prefix}13.${Font_color_suffix} 使用BBR+CAKE加速
  ${Green_font_prefix}14.${Font_color_suffix} 使用BBR2+FQ加速	 	${Green_font_prefix}15.${Font_color_suffix} 使用BBR2+FQ_PIE加速 
@@ -1897,14 +1897,26 @@ check_sys_official_bbr() {
 #检查官方xanmod内核并安装
 check_sys_official_xanmod() {
   check_version
+  wget -O check_x86-64_psabi.sh https://dl.xanmod.org/check_x86-64_psabi.sh
+  chmod +x check_x86-64_psabi.sh
+  cpu_level=$(./check_x86-64_psabi.sh | awk -F 'v' '{print $2}')
+  echo "CPU supports x86-64-v" ${cpu_level}
+  # exit
   if [[ ${bit} != "x86_64" ]]; then
     echo -e "${Error} 不支持x86_64以外的系统 !" && exit 1
   fi
+  
   if [[ "${release}" == "debian" || "${release}" == "ubuntu" ]]; then
     apt-get install gnupg gnupg2 gnupg1 sudo -y
     echo 'deb http://deb.xanmod.org releases main' | sudo tee /etc/apt/sources.list.d/xanmod-kernel.list
     wget -qO - https://dl.xanmod.org/gpg.key | sudo apt-key --keyring /etc/apt/trusted.gpg.d/xanmod-kernel.gpg add -
-    apt update && apt install linux-xanmod -y
+	if [[ "${cpu_level}" == "3" ]]; then
+		apt update && apt install linux-xanmod-x64v3 -y
+	elif [[ "${cpu_level}" == "2" ]]; then
+		apt update && apt install linux-xanmod-x64v2 -y
+	else
+		apt update && apt install linux-xanmod-x64v1 -y	
+	fi	
   else
     echo -e "${Error} 不支持当前系统 ${release} ${version} ${bit} !" && exit 1
   fi
@@ -1914,23 +1926,23 @@ check_sys_official_xanmod() {
 }
 
 #检查官方xanmod高响应内核并安装
-check_sys_official_xanmod_cacule() {
-  check_version
-  if [[ ${bit} != "x86_64" ]]; then
-    echo -e "${Error} 不支持x86_64以外的系统 !" && exit 1
-  fi
-  if [[ "${release}" == "debian" || "${release}" == "ubuntu" ]]; then
-    apt-get install gnupg gnupg2 gnupg1 sudo -y
-    echo 'deb http://deb.xanmod.org releases main' | sudo tee /etc/apt/sources.list.d/xanmod-kernel.list
-    wget -qO - https://dl.xanmod.org/gpg.key | sudo apt-key --keyring /etc/apt/trusted.gpg.d/xanmod-kernel.gpg add -
-    apt update && apt install linux-xanmod-cacule -y
-  else
-    echo -e "${Error} 不支持当前系统 ${release} ${version} ${bit} !" && exit 1
-  fi
+# check_sys_official_xanmod_cacule() {
+  # check_version
+  # if [[ ${bit} != "x86_64" ]]; then
+    # echo -e "${Error} 不支持x86_64以外的系统 !" && exit 1
+  # fi
+  # if [[ "${release}" == "debian" || "${release}" == "ubuntu" ]]; then
+    # apt-get install gnupg gnupg2 gnupg1 sudo -y
+    # echo 'deb http://deb.xanmod.org releases main' | sudo tee /etc/apt/sources.list.d/xanmod-kernel.list
+    # wget -qO - https://dl.xanmod.org/gpg.key | sudo apt-key --keyring /etc/apt/trusted.gpg.d/xanmod-kernel.gpg add -
+    # apt update && apt install linux-xanmod-cacule -y
+  # else
+    # echo -e "${Error} 不支持当前系统 ${release} ${version} ${bit} !" && exit 1
+  # fi
 
-  BBR_grub
-  echo -e "${Tip} 内核安装完毕，请参考上面的信息检查是否安装成功,默认从排第一的高版本内核启动"
-}
+  # BBR_grub
+  # echo -e "${Tip} 内核安装完毕，请参考上面的信息检查是否安装成功,默认从排第一的高版本内核启动"
+# }
 
 #检查debian官方cloud内核并安装
 # check_sys_official_debian_cloud() {
