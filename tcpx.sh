@@ -4,7 +4,7 @@ export PATH
 #=================================================
 #	System Required: CentOS 7/8,Debian/ubuntu,oraclelinux
 #	Description: BBR+BBRplus+Lotserver
-#	Version: 100.0.1.15
+#	Version: 100.0.1.16
 #	Author: 千影,cx9208,YLX
 #	更新内容及反馈:  https://blog.ylx.me/archives/783.html
 #=================================================
@@ -15,7 +15,7 @@ export PATH
 # SKYBLUE='\033[0;36m'
 # PLAIN='\033[0m'
 
-sh_ver="100.0.1.15"
+sh_ver="100.0.1.16"
 github="raw.githubusercontent.com/ylx2016/Linux-NetSpeed/master"
 
 imgurl=""
@@ -1145,7 +1145,7 @@ start_menu() {
  ${Green_font_prefix}19.${Font_color_suffix} 使用BBRplus+FQ版加速       ${Green_font_prefix}20.${Font_color_suffix} 使用Lotserver(锐速)加速
  ${Green_font_prefix}21.${Font_color_suffix} 系统配置优化	 	${Green_font_prefix}22.${Font_color_suffix} 应用johnrosen1的优化方案
  ${Green_font_prefix}23.${Font_color_suffix} 禁用IPv6	 		${Green_font_prefix}24.${Font_color_suffix} 开启IPv6
- ${Green_font_prefix}51.${Font_color_suffix} 查看排序内核               ${Green_font_prefix}52.${Font_color_suffix} 删除保留指定内核
+ ${Green_font_prefix}51.${Font_color_suffix} 设置默认内核               ${Green_font_prefix}52.${Font_color_suffix} 删除保留指定内核
  ${Green_font_prefix}25.${Font_color_suffix} 卸载全部加速	 	${Green_font_prefix}99.${Font_color_suffix} 退出脚本 
 ————————————————————————————————————————————————————————————————" &&
     check_status
@@ -1344,65 +1344,115 @@ detele_kernel_custom() {
 
 #更新引导
 BBR_grub() {
-  if [[ "${release}" == "centos" ]]; then
-    if [[ ${version} == "6" ]]; then
-      if [ -f "/boot/grub/grub.conf" ]; then
-        sed -i 's/^default=.*/default=0/g' /boot/grub/grub.conf
-      elif [ -f "/boot/grub/grub.cfg" ]; then
-        grub-mkconfig -o /boot/grub/grub.cfg
-        grub-set-default 0
-      elif [ -f "/boot/efi/EFI/centos/grub.cfg" ]; then
-        grub-mkconfig -o /boot/efi/EFI/centos/grub.cfg
-        grub-set-default 0
-      elif [ -f "/boot/efi/EFI/redhat/grub.cfg" ]; then
-        grub-mkconfig -o /boot/efi/EFI/redhat/grub.cfg
-        grub-set-default 0
-      else
-        echo -e "${Error} grub.conf/grub.cfg 找不到，请检查."
-        exit
-      fi
-    elif [[ ${version} == "7" ]]; then
-      if [ -f "/boot/grub2/grub.cfg" ]; then
-        grub2-mkconfig -o /boot/grub2/grub.cfg
-        grub2-set-default 0
-      elif [ -f "/boot/efi/EFI/centos/grub.cfg" ]; then
-        grub2-mkconfig -o /boot/efi/EFI/centos/grub.cfg
-        grub2-set-default 0
-      elif [ -f "/boot/efi/EFI/redhat/grub.cfg" ]; then
-        grub2-mkconfig -o /boot/efi/EFI/redhat/grub.cfg
-        grub2-set-default 0
-      else
-        echo -e "${Error} grub.cfg 找不到，请检查."
-        exit
-      fi
-    elif [[ ${version} == "8" ]]; then
-      if [ -f "/boot/grub2/grub.cfg" ]; then
-        grub2-mkconfig -o /boot/grub2/grub.cfg
-        grub2-set-default 0
-      elif [ -f "/boot/efi/EFI/centos/grub.cfg" ]; then
-        grub2-mkconfig -o /boot/efi/EFI/centos/grub.cfg
-        grub2-set-default 0
-      elif [ -f "/boot/efi/EFI/redhat/grub.cfg" ]; then
-        grub2-mkconfig -o /boot/efi/EFI/redhat/grub.cfg
-        grub2-set-default 0
-      else
-        echo -e "${Error} grub.cfg 找不到，请检查."
-        exit
-      fi
-      grubby --info=ALL | awk -F= '$1=="kernel" {print i++ " : " $2}'
+    # 检查用户是否为 root 用户
+    if [[ $EUID -ne 0 ]]; then
+       echo "此脚本必须以 root 权限运行" 
+       exit 1
     fi
-  elif [[ "${release}" == "debian" || "${release}" == "ubuntu" ]]; then
-    if _exists "update-grub"; then
-      update-grub
-    elif [ -f "/usr/sbin/update-grub" ]; then
-      /usr/sbin/update-grub
+    
+    # 确定系统类型
+    if command -v yum &> /dev/null; then
+        system_type="centos"
+    elif command -v apt-get &> /dev/null; then
+        system_type="debian"
     else
-      apt install grub2-common -y
-      update-grub
+        echo "不支持该系统"
+        exit 1
     fi
-    #exit 1
-  fi
+    
+    # 检查 GRUB 版本
+    grub_version="$(grub-install --version | head -n1)"
+    if echo "$grub_version" | grep -q "2"; then
+        grub_file="/etc/default/grub"
+        update_grub="update-grub"
+    else
+        grub_file="/boot/grub/grub.conf"
+        update_grub="grub"
+    fi
+    
+    
+    # 定义设置默认内核的函数
+    set_default_kernel() {
+        sed -i "s|^DEFAULT=.*|DEFAULT=/vmlinuz-$1|g" "$grub_file"
+        $update_grub
+    }
+    
+    # 定义设置 GRUB 超时时间的函数
+    set_timeout() {
+        sed -i "s/^TIMEOUT=.*/TIMEOUT=$1/g" "$grub_file"
+        $update_grub
+    }
+    
+    
+    # 获取内核列表
+    if [ "$system_type" == "centos" ]; then
+        kernels=( $(rpm -q kernel --queryformat "%{VERSION}-%{RELEASE}.%{ARCH}\n" | sort -Vr) )
+    elif [ "$system_type" == "debian" ]; then
+        if dpkg --compare-versions "$(echo 10.0.0 | awk '{print $1+0}')" gt 0 &>/dev/null; then
+            kernels=( $(dpkg -l | awk '/linux-image-/{print $2}' | sed 's/linux-image-//' | sort -rn) )
+        else
+            kernels=( $(dpkg -l | awk '/linux-image-/{print $2}' | sed 's/linux-image-//' | sort -Vrn) )
+        fi
+    fi
+    
+    # 打印排序后的内核列表
+    echo "内核列表:"
+    i=1
+    for kernel in "${kernels[@]}"
+    do
+        echo "$i. $kernel"
+        ((i++))
+    done
+    echo ""
+    
+    # 提示用户选择操作
+    select action in "设置开机启动默认内核" "设置 GRUB 超时时间" "退出"; do
+      case $action in
+        "设置默认内核" ) 
+          echo "请选择要设置为默认内核的版本号(填上面内核列表的数字)："
+          read selected_num
+    
+          # 如果用户输入的数字在列表范围内，则将其对应的版本号设置为默认内核
+          if [ "$selected_num" -ge 1 ] && [ "$selected_num" -le "${#kernels[@]}" ]; then
+              selected_kernel="${kernels[$(($selected_num-1))]}"
+              
+              if [ "$system_type" == "centos" ]; then
+                  set_default_kernel "$selected_kernel"
+              elif [ "$system_type" == "debian" ]; then
+                  set_default_kernel "$selected_kernel"
+              fi
+              
+              echo "已将内核 $selected_kernel 设置为默认内核"
+          else
+              echo "无效的数字"
+              exit 1
+          fi
+          ;;
+          
+        "设置 GRUB 超时时间" ) 
+          echo "请选择超时时间（5 或 10 秒）："
+          read timeout_value
+    
+          if [ "$timeout_value" -eq "5" ]; then
+              set_timeout "5"
+          elif [ "$timeout_value" -eq "10" ]; then
+              set_timeout "10"
+          else
+              echo "无效的超时时间"
+              exit 1
+          fi
+          ;;
+          
+        "退出" ) 
+          break;;
+          
+        * ) 
+          echo "无效的选项"
+          exit 1;;
+      esac
+    done
 }
+
 
 #简单的检查内核
 check_kernel() {
