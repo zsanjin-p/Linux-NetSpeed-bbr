@@ -1048,23 +1048,26 @@ optimizing_ddcc() {
 
 #更新脚本
 Update_Shell() {
-  echo -e "当前版本为 [ ${sh_ver} ]，开始检测最新版本..."
-  sh_new_ver=$(wget -qO- "https://github.com/ylx2016/Linux-NetSpeed/raw/master/tcpx.sh" | grep 'sh_ver="' | awk -F "=" '{print $NF}' | sed 's/\"//g' | head -1)
-  [[ -z ${sh_new_ver} ]] && echo -e "${Error} 检测最新版本失败 !" && start_menu
-  if [ ${sh_new_ver} != ${sh_ver} ]; then
-    echo -e "发现新版本[ ${sh_new_ver} ]，是否更新？[Y/n]"
-    read -p "(默认: y):" yn
-    [[ -z "${yn}" ]] && yn="y"
-    if [[ ${yn} == [Yy] ]]; then
-      wget -N "https://${github}/tcpx.sh" && chmod +x tcpx.sh && ./tcpx.sh
-      echo -e "脚本已更新为最新版本[ ${sh_new_ver} ] !"
+	local shell_file="$(readlink -f "$0")"
+    local shell_url="https://raw.githubusercontent.com/ylx2016/Linux-NetSpeed/master/tcpx.sh"
+
+    # 下载最新版本的脚本
+    wget -O "/tmp/tcpx.sh" "$shell_url" &>/dev/null
+
+    # 比较本地和远程脚本的 md5 值
+    local md5_local="$(md5sum "$shell_file" | awk '{print $1}')"
+    local md5_remote="$(md5sum /tmp/tcpx.sh | awk '{print $1}')"
+
+    if [ "$md5_local" != "$md5_remote" ]; then
+        # 替换本地脚本文件
+        cp "/tmp/tcpx.sh" "$shell_file"
+        chmod +x "$shell_file"
+
+        echo "脚本已更新，请重新运行。"
+        exit 0
     else
-      echo && echo "	已取消..." && echo
+        echo "脚本是最新版本，无需更新。"
     fi
-  else
-    echo -e "当前已是最新版本[ ${sh_new_ver} ] !"
-    sleep 2s && ./tcpx.sh
-  fi
 }
 
 #切换到卸载内核版本
@@ -1406,9 +1409,9 @@ BBR_grub() {
     echo ""
     
     # 提示用户选择操作
-    select action in "设置开机启动默认内核" "设置 GRUB 超时时间" "退出"; do
+    select action in "设置开机启动默认内核" "设置选择内核超时时间" "退出"; do
       case $action in
-        "设置默认内核" ) 
+        "设置开机启动默认内核" ) 
           echo "请选择要设置为默认内核的版本号(填上面内核列表的数字)："
           read selected_num
     
@@ -1429,7 +1432,7 @@ BBR_grub() {
           fi
           ;;
           
-        "设置 GRUB 超时时间" ) 
+        "设置选择内核超时时间" ) 
           echo "请选择超时时间（5 或 10 秒）："
           read timeout_value
     
@@ -1456,8 +1459,11 @@ BBR_grub() {
 
 #简单的检查内核
 check_kernel() {
-  echo -e "${Tip} 鉴于1次人工检查有人不看，下面是2次脚本简易检查内核，开始匹配 /boot/vmlinuz-* 文件"
-  ls /boot/vmlinuz-* -I rescue -1 || echo -e "${Error} 没有匹配到 /boot/vmlinuz-* 文件，很有可能没有内核，谨慎重启，在结合上面第一道检查确认没有内核的情况下，你可以尝试按9切换到不卸载内核选择30安装默认内核救急，此时你应该给我反馈！" && exit
+    if [[ -z "$(find /boot -type f -name 'vmlinuz-*' ! -name 'vmlinuz-*rescue*')" ]]; then
+        echo -e "\033[0;31m警告: 未发现内核文件，请勿重启系统，不卸载内核版本选择30安装默认内核救急！\033[0m"
+    else
+        echo -e "\033[0;32m发现内核文件，看起来可以重启。\033[0m"
+    fi
 }
 
 #############内核管理组件#############
