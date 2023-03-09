@@ -1595,6 +1595,13 @@ check_sys() {
       fi
     done
 
+    if ! type $lsb_release >/dev/null 2>&1; then
+      echo "未安装 redhat-lsb-core，正在安装..."
+      yum install redhat-lsb-core -y
+    else
+      echo "redhat-lsb-core 已安装。"
+    fi
+
   elif [[ "${release}" == "debian" || "${release}" == "ubuntu" ]]; then
     # 检查是否安装了 ca-certificates 包，如果未安装则安装
     if ! dpkg-query -W ca-certificates >/dev/null; then
@@ -1605,7 +1612,7 @@ check_sys() {
     echo 'CA证书检查OK'
 
     # 检查并安装 curl、wget 和 dmidecode 包
-    for pkg in curl wget dmidecode lsb-release; do
+    for pkg in curl wget dmidecode; do
       if ! type $pkg >/dev/null 2>&1; then
         echo "未安装 $pkg，正在安装..."
         apt-get update || apt-get --allow-releaseinfo-change update && apt-get install $pkg -y
@@ -1613,6 +1620,13 @@ check_sys() {
         echo "$pkg 已安装。"
       fi
     done
+
+    if ! type $lsb_release >/dev/null 2>&1; then
+      echo "未安装 lsb-release，正在安装..."
+      apt-get update || apt-get --allow-releaseinfo-change update && apt-get install lsb-release -y
+    else
+      echo "lsb-release 已安装。"
+    fi
 
   else
     echo "不支持的操作系统发行版：${release}"
