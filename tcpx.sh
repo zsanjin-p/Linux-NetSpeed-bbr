@@ -1595,11 +1595,11 @@ check_sys() {
       fi
     done
 
-    if ! type $lsb_release >/dev/null 2>&1; then
-      echo "未安装 redhat-lsb-core，正在安装..."
-      yum install redhat-lsb-core -y
+    if [ -x "$(command -v lsb_release)" ]; then
+      echo "lsb_release 已安装"
     else
-      echo "redhat-lsb-core 已安装。"
+      echo "lsb_release 未安装，现在开始安装..."
+      yum install redhat-lsb-core -y
     fi
 
   elif [[ "${release}" == "debian" || "${release}" == "ubuntu" ]]; then
@@ -1621,11 +1621,11 @@ check_sys() {
       fi
     done
 
-    if ! type $lsb_release >/dev/null 2>&1; then
-      echo "未安装 lsb-release，正在安装..."
-      apt-get update || apt-get --allow-releaseinfo-change update && apt-get install lsb-release -y
+    if [ -x "$(command -v lsb_release)" ]; then
+      echo "lsb_release 已安装"
     else
-      echo "lsb-release 已安装。"
+      echo "lsb_release 未安装，现在开始安装..."
+      apt-get install lsb-release -y
     fi
 
   else
