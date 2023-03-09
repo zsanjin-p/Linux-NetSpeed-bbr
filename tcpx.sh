@@ -35,19 +35,19 @@ fi
 #检查github网络
 check_github() {
   # 检测 raw.githubusercontent.com 的可访问性
-  if ! curl --head --silent --fail "https://raw.githubusercontent.com" > /dev/null; then
+  if ! curl --head --silent --fail "https://raw.githubusercontent.com" >/dev/null; then
     echo "无法访问 https://raw.githubusercontent.com 请检查网络或者本地DNS"
     exit 1
   fi
 
   # 检测 api.github.com 的可访问性
-  if ! curl --head --silent --fail "https://api.github.com" > /dev/null; then
+  if ! curl --head --silent --fail "https://api.github.com" >/dev/null; then
     echo "无法访问 https://api.github.com 请检查网络或者本地DNS"
     exit 1
   fi
 
   # 检测 github.com 的可访问性
-  if ! curl --head --silent --fail "https://github.com" > /dev/null; then
+  if ! curl --head --silent --fail "https://github.com" >/dev/null; then
     echo "无法访问 https://github.com 请检查网络或者本地DNS"
     exit 1
   fi
@@ -1072,26 +1072,26 @@ optimizing_ddcc() {
 
 #更新脚本
 Update_Shell() {
-	local shell_file="$(readlink -f "$0")"
-    local shell_url="https://raw.githubusercontent.com/ylx2016/Linux-NetSpeed/master/tcpx.sh"
+  local shell_file="$(readlink -f "$0")"
+  local shell_url="https://raw.githubusercontent.com/ylx2016/Linux-NetSpeed/master/tcpx.sh"
 
-    # 下载最新版本的脚本
-    wget -O "/tmp/tcpx.sh" "$shell_url" &>/dev/null
+  # 下载最新版本的脚本
+  wget -O "/tmp/tcpx.sh" "$shell_url" &>/dev/null
 
-    # 比较本地和远程脚本的 md5 值
-    local md5_local="$(md5sum "$shell_file" | awk '{print $1}')"
-    local md5_remote="$(md5sum /tmp/tcpx.sh | awk '{print $1}')"
+  # 比较本地和远程脚本的 md5 值
+  local md5_local="$(md5sum "$shell_file" | awk '{print $1}')"
+  local md5_remote="$(md5sum /tmp/tcpx.sh | awk '{print $1}')"
 
-    if [ "$md5_local" != "$md5_remote" ]; then
-        # 替换本地脚本文件
-        cp "/tmp/tcpx.sh" "$shell_file"
-        chmod +x "$shell_file"
+  if [ "$md5_local" != "$md5_remote" ]; then
+    # 替换本地脚本文件
+    cp "/tmp/tcpx.sh" "$shell_file"
+    chmod +x "$shell_file"
 
-        echo "脚本已更新，请重新运行。"
-        exit 0
-    else
-        echo "脚本是最新版本，无需更新。"
-    fi
+    echo "脚本已更新，请重新运行。"
+    exit 0
+  else
+    echo "脚本是最新版本，无需更新。"
+  fi
 }
 
 #切换到卸载内核版本
@@ -1431,14 +1431,13 @@ BBR_grub() {
   fi
 }
 
-
 #简单的检查内核
 check_kernel() {
-    if [[ -z "$(find /boot -type f -name 'vmlinuz-*' ! -name 'vmlinuz-*rescue*')" ]]; then
-        echo -e "\033[0;31m警告: 未发现内核文件，请勿重启系统，不卸载内核版本选择30安装默认内核救急！\033[0m"
-    else
-        echo -e "\033[0;32m发现内核文件，看起来可以重启。\033[0m"
-    fi
+  if [[ -z "$(find /boot -type f -name 'vmlinuz-*' ! -name 'vmlinuz-*rescue*')" ]]; then
+    echo -e "\033[0;31m警告: 未发现内核文件，请勿重启系统，不卸载内核版本选择30安装默认内核救急！\033[0m"
+  else
+    echo -e "\033[0;32m发现内核文件，看起来可以重启。\033[0m"
+  fi
 }
 
 #############内核管理组件#############
@@ -1449,17 +1448,11 @@ check_kernel() {
 check_sys() {
   if [[ -f /etc/redhat-release ]]; then
     release="centos"
-  elif cat /etc/issue | grep -q -E -i "debian"; then
+  elif grep -qi "debian" /etc/issue; then
     release="debian"
-  elif cat /etc/issue | grep -q -E -i "ubuntu"; then
+  elif grep -qi "ubuntu" /etc/issue; then
     release="ubuntu"
-  elif cat /etc/issue | grep -q -E -i "centos|red hat|redhat"; then
-    release="centos"
-  elif cat /proc/version | grep -q -E -i "debian"; then
-    release="debian"
-  elif cat /proc/version | grep -q -E -i "ubuntu"; then
-    release="ubuntu"
-  elif cat /proc/version | grep -q -E -i "centos|red hat|redhat"; then
+  elif grep -qi -E "centos|red hat|redhat" /etc/issue || grep -qi -E "centos|red hat|redhat" /proc/version; then
     release="centos"
   fi
 
@@ -1479,85 +1472,23 @@ check_sys() {
   }
 
   get_opsy() {
-    [ -f /etc/redhat-release ] && awk '{print ($1,$3~/^[0-9]/?$3:$4)}' /etc/redhat-release && return
-    [ -f /etc/os-release ] && awk -F'[= "]' '/PRETTY_NAME/{print $3,$4,$5}' /etc/os-release && return
-    [ -f /etc/lsb-release ] && awk -F'[="]+' '/DESCRIPTION/{print $2}' /etc/lsb-release && return
+    if [ -f /etc/os-release ]; then
+      awk -F'[= "]' '/PRETTY_NAME/{print $3,$4,$5}' /etc/os-release
+    elif [ -f /etc/lsb-release ]; then
+      awk -F'[="]+' '/DESCRIPTION/{print $2}' /etc/lsb-release
+    elif [ -f /etc/system-release ]; then
+      cat /etc/system-release | awk '{print $1,$2}'
+    fi
   }
+
   get_system_info() {
-    #cname=$(awk -F: '/model name/ {name=$2} END {print name}' /proc/cpuinfo | sed 's/^[ \t]*//;s/[ \t]*$//')
-    #cores=$(awk -F: '/model name/ {core++} END {print core}' /proc/cpuinfo)
-    #freq=$(awk -F: '/cpu MHz/ {freq=$2} END {print freq}' /proc/cpuinfo | sed 's/^[ \t]*//;s/[ \t]*$//')
-    #corescache=$(awk -F: '/cache size/ {cache=$2} END {print cache}' /proc/cpuinfo | sed 's/^[ \t]*//;s/[ \t]*$//')
-    #tram=$(free -m | awk '/Mem/ {print $2}')
-    #uram=$(free -m | awk '/Mem/ {print $3}')
-    #bram=$(free -m | awk '/Mem/ {print $6}')
-    #swap=$(free -m | awk '/Swap/ {print $2}')
-    #uswap=$(free -m | awk '/Swap/ {print $3}')
-    #up=$(awk '{a=$1/86400;b=($1%86400)/3600;c=($1%3600)/60} {printf("%d days %d hour %d min\n",a,b,c)}' /proc/uptime)
-    #load=$(w | head -1 | awk -F'load average:' '{print $2}' | sed 's/^[ \t]*//;s/[ \t]*$//')
     opsy=$(get_opsy)
     arch=$(uname -m)
-    #lbit=$(getconf LONG_BIT)
     kern=$(uname -r)
-
-    # disk_size1=$( LANG=C df -hPl | grep -wvE '\-|none|tmpfs|overlay|shm|udev|devtmpfs|by-uuid|chroot|Filesystem' | awk '{print $2}' )
-    # disk_size2=$( LANG=C df -hPl | grep -wvE '\-|none|tmpfs|overlay|shm|udev|devtmpfs|by-uuid|chroot|Filesystem' | awk '{print $3}' )
-    # disk_total_size=$( calc_disk ${disk_size1[@]} )
-    # disk_used_size=$( calc_disk ${disk_size2[@]} )
-
-    #tcpctrl=$(sysctl net.ipv4.tcp_congestion_control | awk -F ' ' '{print $3}')
-
     virt_check
   }
   # from LemonBench
   virt_check() {
-    # if hash ifconfig 2>/dev/null; then
-    # eth=$(ifconfig)
-    # fi
-
-    # _exists "dmesg" && virtualx="$(dmesg 2>/dev/null)"
-
-    # if _exists "dmidecode"; then
-    # sys_manu="$(dmidecode -s system-manufacturer 2>/dev/null)"
-    # sys_product="$(dmidecode -s system-product-name 2>/dev/null)"
-    # sys_ver="$(dmidecode -s system-version 2>/dev/null)"
-    # else
-    # sys_manu=""
-    # sys_product=""
-    # sys_ver=""
-    # fi
-    # if   grep -qa docker /proc/1/cgroup; then
-    # virtual="Docker"
-    # elif grep -qa lxc /proc/1/cgroup; then
-    # virtual="LXC"
-    # elif grep -qa container=lxc /proc/1/environ; then
-    # virtual="LXC"
-    # elif [[ -f /proc/user_beancounters ]]; then
-    # virtual="OpenVZ"
-    # elif [[ "${virtualx}" == *kvm-clock* ]]; then
-    # virtual="KVM"
-    # elif [[ "${cname}" == *KVM* ]]; then
-    # virtual="KVM"
-    # elif [[ "${cname}" == *QEMU* ]]; then
-    # virtual="KVM"
-    # elif [[ "${virtualx}" == *"VMware Virtual Platform"* ]]; then
-    # virtual="VMware"
-    # elif [[ "${virtualx}" == *"Parallels Software International"* ]]; then
-    # virtual="Parallels"
-    # elif [[ "${virtualx}" == *VirtualBox* ]]; then
-    # virtual="VirtualBox"
-    # elif [[ -e /proc/xen ]]; then
-    # virtual="Xen"
-    # elif [[ "${sys_manu}" == *"Microsoft Corporation"* ]]; then
-    # if [[ "${sys_product}" == *"Virtual Machine"* ]]; then
-    # if [[ "${sys_ver}" == *"7.0"* || "${sys_ver}" == *"Hyper-V" ]]; then
-    # virtual="Hyper-V"
-    # else
-    # virtual="Microsoft Virtual Machine"
-    # fi
-    # else
-    # virtual="Dedicated母鸡"
-    # fi
     if [ -f "/usr/bin/systemd-detect-virt" ]; then
       Var_VirtType="$(/usr/bin/systemd-detect-virt)"
       # 虚拟机检测
@@ -1627,7 +1558,7 @@ check_sys() {
       Var_VirtTypeCount="$(echo $Var_VirtTypeCount | wc -l)"
       if [ "${Var_VirtTypeCount}" -gt "1" ]; then # 处理嵌套虚拟化
         virtual="echo ${Var_VirtType}"
-        Var_VirtType="$(echo ${Var_VirtType} | head -n1)" # 使用检测到的第一种虚拟化继续做判断
+        Var_VirtType="$(echo ${Var_VirtType} | head -n1)"                          # 使用检测到的第一种虚拟化继续做判断
       elif [ "${Var_VirtTypeCount}" -eq "1" ] && [ "${Var_VirtType}" != "" ]; then # 只有一种虚拟化
         virtual="${Var_VirtType}"
       else
@@ -1646,62 +1577,46 @@ check_sys() {
 
   #检查依赖
   if [[ "${release}" == "centos" ]]; then
-    if (yum list installed ca-certificates | grep '202'); then
-      echo 'CA证书检查OK'
-    else
-      echo 'CA证书检查不通过，处理中'
+    # 检查是否安装了 ca-certificates 包，如果未安装则安装
+    if ! rpm -q ca-certificates >/dev/null; then
+      echo '正在安装 ca-certificates 包...'
       yum install ca-certificates -y
       update-ca-trust force-enable
     fi
-    if ! type curl >/dev/null 2>&1; then
-      echo 'curl 未安装 安装中'
-      yum install curl -y
-    else
-      echo 'curl 已安装，继续'
-    fi
+    echo 'CA证书检查OK'
 
-    if ! type wget >/dev/null 2>&1; then
-      echo 'wget 未安装 安装中'
-      yum install curl -y
-    else
-      echo 'wget 已安装，继续'
-    fi
-
-    if ! type dmidecode >/dev/null 2>&1; then
-      echo 'dmidecode 未安装 安装中'
-      yum install dmidecode -y
-    else
-      echo 'dmidecode 已安装，继续'
-    fi
+    # 检查并安装 curl、wget 和 dmidecode 包
+    for pkg in curl wget dmidecode; do
+      if ! type $pkg >/dev/null 2>&1; then
+        echo "未安装 $pkg，正在安装..."
+        yum install $pkg -y
+      else
+        echo "$pkg 已安装。"
+      fi
+    done
 
   elif [[ "${release}" == "debian" || "${release}" == "ubuntu" ]]; then
-    if (apt list --installed | grep 'ca-certificates' | grep '202'); then
-      echo 'CA证书检查OK'
-    else
-      echo 'CA证书检查不通过，处理中'
+    # 检查是否安装了 ca-certificates 包，如果未安装则安装
+    if ! dpkg-query -W ca-certificates >/dev/null; then
+      echo '正在安装 ca-certificates 包...'
       apt-get update || apt-get --allow-releaseinfo-change update && apt-get install ca-certificates -y
       update-ca-certificates
     fi
-    if ! type curl >/dev/null 2>&1; then
-      echo 'curl 未安装 安装中'
-      apt-get update || apt-get --allow-releaseinfo-change update && apt-get install curl -y
-    else
-      echo 'curl 已安装，继续'
-    fi
+    echo 'CA证书检查OK'
 
-    if ! type wget >/dev/null 2>&1; then
-      echo 'wget 未安装 安装中'
-      apt-get update || apt-get --allow-releaseinfo-change update && apt-get install wget -y
-    else
-      echo 'wget 已安装，继续'
-    fi
+    # 检查并安装 curl、wget 和 dmidecode 包
+    for pkg in curl wget dmidecode; do
+      if ! type $pkg >/dev/null 2>&1; then
+        echo "未安装 $pkg，正在安装..."
+        apt-get update || apt-get --allow-releaseinfo-change update && apt-get install $pkg -y
+      else
+        echo "$pkg 已安装。"
+      fi
+    done
 
-    if ! type dmidecode >/dev/null 2>&1; then
-      echo 'dmidecode 未安装 安装中'
-      apt-get update || apt-get --allow-releaseinfo-change update && apt-get install dmidecode -y
-    else
-      echo 'dmidecode 已安装，继续'
-    fi
+  else
+    echo "不支持的操作系统发行版：${release}"
+    exit 1
   fi
 }
 
@@ -1713,11 +1628,6 @@ check_version() {
     version=$(grep -oE "[0-9.]+" /etc/issue | cut -d . -f 1)
   fi
   bit=$(uname -m)
-  # if [[ ${bit} = "x86_64" ]]; then
-  # bit="x64"
-  # else
-  # bit="x32"
-  # fi
 }
 
 #检查安装bbr的系统要求
@@ -1936,18 +1846,18 @@ check_sys_official_xanmod() {
   if [[ ${bit} != "x86_64" ]]; then
     echo -e "${Error} 不支持x86_64以外的系统 !" && exit 1
   fi
-  
+
   if [[ "${release}" == "debian" || "${release}" == "ubuntu" ]]; then
     apt-get install gnupg gnupg2 gnupg1 sudo -y
     echo 'deb http://deb.xanmod.org releases main' | sudo tee /etc/apt/sources.list.d/xanmod-kernel.list
     wget -qO - https://dl.xanmod.org/gpg.key | sudo apt-key --keyring /etc/apt/trusted.gpg.d/xanmod-kernel.gpg add -
-	if [[ "${cpu_level}" == "3" ]]; then
-		apt update && apt install linux-xanmod-x64v3 -y
-	elif [[ "${cpu_level}" == "2" ]]; then
-		apt update && apt install linux-xanmod-x64v2 -y
-	else
-		apt update && apt install linux-xanmod-x64v1 -y	
-	fi	
+    if [[ "${cpu_level}" == "3" ]]; then
+      apt update && apt install linux-xanmod-x64v3 -y
+    elif [[ "${cpu_level}" == "2" ]]; then
+      apt update && apt install linux-xanmod-x64v2 -y
+    else
+      apt update && apt install linux-xanmod-x64v1 -y
+    fi
   else
     echo -e "${Error} 不支持当前系统 ${release} ${version} ${bit} !" && exit 1
   fi
@@ -1955,63 +1865,6 @@ check_sys_official_xanmod() {
   BBR_grub
   echo -e "${Tip} 内核安装完毕，请参考上面的信息检查是否安装成功,默认从排第一的高版本内核启动"
 }
-
-#检查官方xanmod高响应内核并安装
-# check_sys_official_xanmod_cacule() {
-  # check_version
-  # if [[ ${bit} != "x86_64" ]]; then
-    # echo -e "${Error} 不支持x86_64以外的系统 !" && exit 1
-  # fi
-  # if [[ "${release}" == "debian" || "${release}" == "ubuntu" ]]; then
-    # apt-get install gnupg gnupg2 gnupg1 sudo -y
-    # echo 'deb http://deb.xanmod.org releases main' | sudo tee /etc/apt/sources.list.d/xanmod-kernel.list
-    # wget -qO - https://dl.xanmod.org/gpg.key | sudo apt-key --keyring /etc/apt/trusted.gpg.d/xanmod-kernel.gpg add -
-    # apt update && apt install linux-xanmod-cacule -y
-  # else
-    # echo -e "${Error} 不支持当前系统 ${release} ${version} ${bit} !" && exit 1
-  # fi
-
-  # BBR_grub
-  # echo -e "${Tip} 内核安装完毕，请参考上面的信息检查是否安装成功,默认从排第一的高版本内核启动"
-# }
-
-#检查debian官方cloud内核并安装
-# check_sys_official_debian_cloud() {
-# check_version
-# if [[ "${release}" == "debian" ]]; then
-# if [[ ${version} == "9" ]]; then
-# echo "deb http://deb.debian.org/debian stretch-backports main" >/etc/apt/sources.list.d/stretch-backports.list
-# apt update
-# apt -t stretch-backports install linux-image-cloud-amd64 linux-headers-cloud-amd64 -y
-# elif [[ ${version} == "10" ]]; then
-# echo "deb http://deb.debian.org/debian buster-backports main" >/etc/apt/sources.list.d/buster-backports.list
-# apt update
-# apt -t buster-backports install linux-image-cloud-amd64 linux-headers-cloud-amd64 -y
-# else
-# echo -e "${Error} 不支持当前系统 ${release} ${version} ${bit} !" && exit 1
-# fi
-# else
-# echo -e "${Error} 不支持当前系统 ${release} ${version} ${bit} !" && exit 1
-# fi
-
-# BBR_grub
-# echo -e "${Tip} 内核安装完毕，请参考上面的信息检查是否安装成功,默认从排第一的高版本内核启动"
-# }
-#检查cloud内核并安装
-# check_sys_cloud(){
-# check_version
-# if [[ "${release}" == "centos" ]]; then
-# if [[ ${version} = "7" ]]; then
-# installcloud
-# else
-# echo -e "${Error} 不支持当前系统 ${release} ${version} ${bit} !" && exit 1
-# fi
-# elif [[ "${release}" == "debian" || "${release}" == "ubuntu" ]]; then
-# installcloud
-# else
-# echo -e "${Error} 不支持当前系统 ${release} ${version} ${bit} !" && exit 1
-# fi
-# }
 
 #检查Zen官方内核并安装
 check_sys_official_zen() {
