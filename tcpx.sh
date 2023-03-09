@@ -1586,7 +1586,7 @@ check_sys() {
     echo 'CA证书检查OK'
 
     # 检查并安装 curl、wget 和 dmidecode 包
-    for pkg in curl wget dmidecode; do
+    for pkg in curl wget dmidecode redhat-lsb-core; do
       if ! type $pkg >/dev/null 2>&1; then
         echo "未安装 $pkg，正在安装..."
         yum install $pkg -y
@@ -1605,7 +1605,7 @@ check_sys() {
     echo 'CA证书检查OK'
 
     # 检查并安装 curl、wget 和 dmidecode 包
-    for pkg in curl wget dmidecode; do
+    for pkg in curl wget dmidecode lsb-release; do
       if ! type $pkg >/dev/null 2>&1; then
         echo "未安装 $pkg，正在安装..."
         apt-get update || apt-get --allow-releaseinfo-change update && apt-get install $pkg -y
@@ -1782,6 +1782,9 @@ check_sys_official() {
 #检查官方最新内核并安装
 check_sys_official_bbr() {
   check_version
+  os_name=$(awk -F= '/^NAME/{print $2}' /etc/os-release | tr -d '"')
+  os_version=$(awk -F= '/^VERSION_ID/{print $2}' /etc/os-release | tr -d '"')
+  os_arch=$(uname -m)
   bit=$(uname -m)
   if [[ "${release}" == "centos" ]]; then
     if [[ ${bit} != "x86_64" ]]; then
@@ -1798,32 +1801,37 @@ check_sys_official_bbr() {
       echo -e "${Error} 不支持当前系统 ${release} ${version} ${bit} !" && exit 1
     fi
   elif [[ "${release}" == "debian" ]]; then
-    if [[ ${version} == "9" ]]; then
+    case ${os_version} in
+    9)
       echo "deb http://deb.debian.org/debian stretch-backports main" >/etc/apt/sources.list.d/stretch-backports.list
-      apt update
-      if [[ ${bit} == "x86_64" ]]; then
-        apt -t stretch-backports install linux-image-amd64 linux-headers-amd64 -y
-      elif [[ ${bit} == "aarch64" ]]; then
-        apt -t stretch-backports install linux-image-arm64 linux-headers-arm64 -y
-      fi
-    elif [[ ${version} == "10" ]]; then
+      ;;
+    10)
       echo "deb http://deb.debian.org/debian buster-backports main" >/etc/apt/sources.list.d/buster-backports.list
-      apt update
-      if [[ ${bit} == "x86_64" ]]; then
-        apt -t buster-backports install linux-image-amd64 linux-headers-amd64 -y
-      elif [[ ${bit} == "aarch64" ]]; then
-        apt -t buster-backports install linux-image-arm64 linux-headers-arm64 -y
-      fi
-    elif [[ ${version} == "11" ]]; then
+      ;;
+    11)
       echo "deb http://deb.debian.org/debian bullseye-backports main" >/etc/apt/sources.list.d/bullseye-backports.list
-      apt update
-      if [[ ${bit} == "x86_64" ]]; then
-        apt -t bullseye-backports install linux-image-amd64 linux-headers-amd64 -y
-      elif [[ ${bit} == "aarch64" ]]; then
-        echo -e "${Error} 暂时不支持aarch64的系统 !" && exit 1
-      fi
+      ;;
+    12)
+      echo "deb http://deb.debian.org/debian bookworm-backports main" >/etc/apt/sources.list.d/bookworm-backports.list
+      ;;
+    *)
+      echo -e "[Error] 不支持当前系统 ${os_name} ${os_version} ${os_arch} !" && exit 1
+      ;;
+    esac
+
+    apt update
+    if [[ ${os_arch} == "x86_64" ]]; then
+      apt -t $(lsb_release -cs)-backports install \
+        linux-image-amd64 \
+        linux-headers-amd64 \
+        -y
+    elif [[ ${os_arch} =~ ^(arm|aarch64)$ ]]; then
+      apt -t $(lsb_release -cs)-backports install \
+        linux-image-arm64 \
+        linux-headers-arm64 \
+        -y
     else
-      echo -e "${Error} 不支持当前系统 ${release} ${version} ${bit} !" && exit 1
+      echo -e "[Error] 不支持当前系统架构 ${os_arch} !" && exit 1
     fi
   elif [[ "${release}" == "ubuntu" ]]; then
     echo -e "${Error} ubuntu不会写，你来吧" && exit 1
