@@ -32,6 +32,12 @@ if [ -f "/etc/sysctl.d/bbr.conf" ]; then
   rm -rf /etc/sysctl.d/bbr.conf
 fi
 
+# 检查当前用户是否为 root 用户
+if [ "$EUID" -ne 0 ]
+  then echo "请使用 root 用户身份运行此脚本"
+  exit
+fi
+
 #检查github网络
 check_github() {
   # 检测 raw.githubusercontent.com 的可访问性
