@@ -4,7 +4,7 @@ export PATH
 #=================================================
 #	System Required: CentOS 7/8,Debian/ubuntu,oraclelinux
 #	Description: BBR+BBRplus+Lotserver
-#	Version: 100.0.1.16
+#	Version: 100.0.1.17
 #	Author: 千影,cx9208,YLX
 #	更新内容及反馈:  https://blog.ylx.me/archives/783.html
 #=================================================
@@ -15,7 +15,7 @@ export PATH
 # SKYBLUE='\033[0;36m'
 # PLAIN='\033[0m'
 
-sh_ver="100.0.1.16"
+sh_ver="100.0.1.17"
 github="raw.githubusercontent.com/ylx2016/Linux-NetSpeed/master"
 
 imgurl=""
@@ -31,6 +31,30 @@ Tip="${Green_font_prefix}[注意]${Font_color_suffix}"
 if [ -f "/etc/sysctl.d/bbr.conf" ]; then
   rm -rf /etc/sysctl.d/bbr.conf
 fi
+
+#检查github网络
+check_github() {
+  # 检测 raw.githubusercontent.com 的可访问性
+  if ! curl --head --silent --fail "https://raw.githubusercontent.com" > /dev/null; then
+    echo "无法访问 https://raw.githubusercontent.com 请检查网络或者本地DNS"
+    exit 1
+  fi
+
+  # 检测 api.github.com 的可访问性
+  if ! curl --head --silent --fail "https://api.github.com" > /dev/null; then
+    echo "无法访问 https://api.github.com 请检查网络或者本地DNS"
+    exit 1
+  fi
+
+  # 检测 github.com 的可访问性
+  if ! curl --head --silent --fail "https://github.com" > /dev/null; then
+    echo "无法访问 https://github.com 请检查网络或者本地DNS"
+    exit 1
+  fi
+
+  # 所有域名均可访问，打印成功提示
+  echo "github可访问，继续执行脚本..."
+}
 
 #检查连接
 checkurl() {
@@ -1921,4 +1945,5 @@ check_status() {
 check_sys
 check_version
 [[ ${release} != "debian" ]] && [[ ${release} != "ubuntu" ]] && [[ ${release} != "centos" ]] && echo -e "${Error} 本脚本不支持当前系统 ${release} !" && exit 1
+check_github
 start_menu
