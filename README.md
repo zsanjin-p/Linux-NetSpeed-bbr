@@ -140,15 +140,6 @@ https://git.beta.gs/
 <br>
 https://www.cxthhhhh.com/network-reinstall-system-modify
 
-高科技
-<br>
-https://github.com/mack-a/v2ray-agent
-<br>
-https://github.com/phlinhng/v2ray-tcp-tls-web
-<br>
-https://github.com/johnrosen1/vpstoolbox
-<br>
-https://github.com/wulabing/Xray_onekey
 
 服务周期
 <br>
